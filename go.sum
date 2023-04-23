@@ -2,3 +2,5 @@ github.com/Xustyx/w32 v0.0.0-20160511232645-7f628311f4e8 h1:BygsECN5sbNhkUdQkWPL
 github.com/Xustyx/w32 v0.0.0-20160511232645-7f628311f4e8/go.mod h1:+7E94MV3Uy+A41SLtlKYxudwdTFBUGuXqhLbe0/iuHQ=
 github.com/aditkumar1/goxymemory v0.0.0-20220207062455-ede630a7c773 h1:VGgqbV7fVWIRbqH7OkAXjJAj0UvJ0MwkeO2IqzMGIcw=
 github.com/aditkumar1/goxymemory v0.0.0-20220207062455-ede630a7c773/go.mod h1:HudUVshLKuDVfr3O1yY8KqPos1XCOOOGnjQFDI0TQKg=
+github.com/jamesmoriarty/gomem v1.0.0 h1:nDpWzE/XhUCIp9tBW4f5sw2K1aabeCQdedwPH8ZQUms=
+github.com/jamesmoriarty/gomem v1.0.0/go.mod h1:PUhkYqg17uDRQs52DoBRalN8LgJ/qPb4gjy4mjSzh5E=
