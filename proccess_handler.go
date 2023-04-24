@@ -3,7 +3,6 @@ package gorwmem
 import (
 	"errors"
 	"fmt"
-	"github.com/Xustyx/w32"
 	"unsafe"
 )
 
@@ -38,22 +37,22 @@ func ProcessHandler(processName string) (hProcess *processHandler, err ProcessEx
 func list() (processes []*Process) {
 	processes = make([]*Process, 0)
 
-	handle := w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPPROCESS, 0)
+	handle := CreateToolhelp32Snapshot(Th32csSnapprocess, 0)
 	if handle == 0 {
 		fmt.Printf("Warning, CreateToolhelp32Snapshot failed. Error: ")
 		return
 	}
 
-	var pEntry w32.PROCESSENTRY32
+	var pEntry PROCESSENTRY32
 	Processentry32Size := unsafe.Sizeof(pEntry)
 	pEntry.Size = uint32(Processentry32Size)
 
-	_err := w32.Process32First(handle, &pEntry) //Read frist element.
+	_err := Process32First(handle, &pEntry) //Read frist element.
 	if _err == nil {
 		for {
-			name := w32.UTF16PtrToString(&pEntry.ExeFile[0])
+			name := UTF16PtrToString(&pEntry.ExeFile[0])
 			processes = append(processes, &Process{name, pEntry.ProcessID})
-			_err = w32.Process32Next(handle, &pEntry)
+			_err = Process32Next(handle, &pEntry)
 			if _err != nil {
 				break
 			}
@@ -62,7 +61,7 @@ func list() (processes []*Process) {
 		fmt.Printf("Warning, Process32First failed. Error: %v", _err)
 	}
 
-	w32.CloseHandle(handle)
+	CloseHandle(handle)
 
 	return
 }
@@ -92,7 +91,7 @@ func (ph *processHandler) Open() (err ProcessException) {
 
 	setDebugPrivilege()
 
-	handle, _err := w32.OpenProcess(w32.PROCESS_ALL_ACCESS, false, ph.process.Pid)
+	handle, _err := OpenProcess(PROCESS_ALL_ACCESS, false, ph.process.Pid)
 	if _err != nil {
 		err = errors.New("Cannot open this process. Reason: " + _err.Error())
 		return
@@ -104,28 +103,28 @@ func (ph *processHandler) Open() (err ProcessException) {
 
 // setDebugPrivilege This function try to set self process with debug privileges.
 func setDebugPrivilege() bool {
-	pseudoHandle, _err := w32.GetCurrentProcess()
+	pseudoHandle, _err := GetCurrentProcess()
 	if _err != nil {
 		fmt.Printf("Warning, GetCurrentProcess failed. Error: %v", _err)
 		return false
 	}
 
-	hToken := w32.HANDLE(0)
-	if !w32.OpenProcessToken(w32.HANDLE(pseudoHandle), w32.TOKEN_ADJUST_PRIVILEGES|w32.TOKEN_QUERY, &hToken) {
+	hToken := HANDLE(0)
+	if !OpenProcessToken(HANDLE(pseudoHandle), TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY, &hToken) {
 		fmt.Printf("Warning, GetCurrentProcess failed.")
 		return false
 	}
 
-	return setPrivilege(hToken, w32.SE_DEBUG_NAME, true)
+	return setPrivilege(hToken, SE_DEBUG_NAME, true)
 }
 
 // setPrivilege This function try to set privileges to a process.
-func setPrivilege(hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool) bool {
-	tPrivs := w32.TOKEN_PRIVILEGES{}
+func setPrivilege(hToken HANDLE, lpszPrivilege string, bEnablePrivilege bool) bool {
+	tPrivs := TOKEN_PRIVILEGES{}
 	TokenPrivilegesSize := uint32(unsafe.Sizeof(tPrivs))
-	luid := w32.LUID{}
+	luid := LUID{}
 
-	if !w32.LookupPrivilegeValue(string(""), lpszPrivilege, &luid) {
+	if !LookupPrivilegeValue(string(""), lpszPrivilege, &luid) {
 		fmt.Printf("Warning, LookupPrivilegeValue failed.")
 		return false
 	}
@@ -134,12 +133,12 @@ func setPrivilege(hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool
 	tPrivs.Privileges[0].Luid = luid
 
 	if bEnablePrivilege {
-		tPrivs.Privileges[0].Attributes = w32.SE_PRIVILEGE_ENABLED
+		tPrivs.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED
 	} else {
 		tPrivs.Privileges[0].Attributes = 0
 	}
 
-	if !w32.AdjustTokenPrivileges(hToken, 0, &tPrivs, TokenPrivilegesSize, nil, nil) {
+	if !AdjustTokenPrivileges(hToken, 0, &tPrivs, TokenPrivilegesSize, nil, nil) {
 		fmt.Printf("Warning, AdjustTokenPrivileges failed.")
 		return false
 	}
@@ -150,15 +149,15 @@ func setPrivilege(hToken w32.HANDLE, lpszPrivilege string, bEnablePrivilege bool
 // GetModuleFromName This function search a module inside process.
 func (ph *processHandler) GetModuleFromName(module string) (uintptr, error) {
 	var (
-		me32 w32.MODULEENTRY32
-		snap w32.HANDLE
+		me32 MODULEENTRY32
+		snap HANDLE
 	)
 
-	snap = w32.CreateToolhelp32Snapshot(w32.TH32CS_SNAPMODULE|w32.TH32CS_SNAPMODULE32, ph.process.Pid)
+	snap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, ph.process.Pid)
 	me32.Size = uint32(unsafe.Sizeof(me32))
 
-	for ok := w32.Module32First(snap, &me32); ok; ok = w32.Module32Next(snap, &me32) {
-		szModule := w32.UTF16PtrToString(&me32.SzModule[0])
+	for ok := Module32First(snap, &me32); ok; ok = Module32Next(snap, &me32) {
+		szModule := UTF16PtrToString(&me32.SzModule[0])
 
 		if szModule == module {
 			return (uintptr)(unsafe.Pointer(me32.ModBaseAddr)), nil
@@ -180,7 +179,7 @@ func (ph *processHandler) ReadBytes(address uint, size uint) (data []byte, err P
 		err = errors.New("no process handle")
 	}
 
-	data, _err := w32.ReadProcessMemory(w32.HANDLE(ph.hProcess), uint32(address), size)
+	data, _err := ReadProcessMemory(HANDLE(ph.hProcess), uint32(address), size)
 	if _err != nil {
 		err = errors.New("Error reading memory. Reason: " + _err.Error())
 	}
@@ -199,7 +198,7 @@ func (ph *processHandler) WriteBytes(address uint, data []byte) (err ProcessExce
 		err = errors.New("no process handle")
 	}
 
-	_err := w32.WriteProcessMemory(w32.HANDLE(ph.hProcess), uint32(address), data, uint(len(data)))
+	_err := WriteProcessMemory(HANDLE(ph.hProcess), uint32(address), data, uint(len(data)))
 	if _err != nil {
 		err = errors.New("Error writing memory. Reason: " + _err.Error())
 	}

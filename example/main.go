@@ -17,12 +17,13 @@ func main() {
 		return
 	}
 
+	clientAddress, err := dm.GetModuleFromName("client.dll")
+	if err != nil {
+		fmt.Printf("Failed reading module client.dll. %s", err)
+	}
+
 	// radar csgo on enemy testing
 	for {
-		clientAddress, err := dm.GetModuleFromName("client.dll")
-		if err != nil {
-			fmt.Printf("Failed reading module client.dll. %s", err)
-		}
 		for i := 1; i < 32; i++ {
 			var entity gorwmem.Data
 			entity, err = dm.Read((uint)(clientAddress)+(81788868+(uint)(i*0x10)), gorwmem.UINT)
