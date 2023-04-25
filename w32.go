@@ -63,15 +63,15 @@ var (
 	procCreateToolhelp32Snapshot = modkernel32.NewProc("CreateToolhelp32Snapshot")
 	procCloseHandle              = modkernel32.NewProc("CloseHandle")
 	procOpenProcess              = modkernel32.NewProc("OpenProcess")
+	procModule32First            = modkernel32.NewProc("Module32FirstW")
+	procModule32Next             = modkernel32.NewProc("Module32NextW")
+	procReadProcessMemory        = modkernel32.NewProc("ReadProcessMemory")
+	procWriteProcessMemory       = modkernel32.NewProc("WriteProcessMemory")
 
 	modadvapi32               = syscall.NewLazyDLL("advapi32.dll")
 	procOpenProcessToken      = modadvapi32.NewProc("OpenProcessToken")
 	procLookupPrivilegeValue  = modadvapi32.NewProc("LookupPrivilegeValueW")
 	procAdjustTokenPrivileges = modadvapi32.NewProc("AdjustTokenPrivileges")
-	procModule32First         = modkernel32.NewProc("Module32FirstW")
-	procModule32Next          = modkernel32.NewProc("Module32NextW")
-	procReadProcessMemory     = modkernel32.NewProc("ReadProcessMemory")
-	procWriteProcessMemory    = modkernel32.NewProc("WriteProcessMemory")
 )
 
 func CreateToolhelp32Snapshot(flags, processId uint32) HANDLE {

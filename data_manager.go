@@ -17,6 +17,7 @@ const (
 	BYTE
 	STRING
 	FLOAT
+	ARRAY
 )
 
 // String representation of data types.
@@ -78,10 +79,11 @@ func GetDataManager(processName string) *DataManager {
 // Facade to Read methods.
 // Public function of (data_manager) package.
 // Param   (address)  : The process memory address in hexadecimal. EX: (0X0057F0F0).
+// Param   (size)     : Size array
 // Param   (dataType) : The type of data that want to retrieve.
 // Returns (data)     : The data from memory. If low level facade fails, this will be nil.
 // Errors  (err)	  : This will be not nil if handle is not opened or the type is invalid.
-func (dm *DataManager) Read(address uint, dataType DataType) (data Data, err DataException) {
+func (dm *DataManager) Read(address, size uint, dataType DataType) (data Data, err DataException) {
 	_err := error(nil)
 
 	if !dm.IsOpen {
@@ -98,6 +100,8 @@ func (dm *DataManager) Read(address uint, dataType DataType) (data Data, err Dat
 		data, _err = dm.readByte(address)
 	case STRING:
 		data, _err = dm.readString(address)
+	case ARRAY:
+		data, _err = dm.readArray(address, size)
 	default:
 		err = errors.New("invalid data type")
 	}
@@ -148,6 +152,40 @@ func (dm *DataManager) readString(address uint) (data Data, err ProcessException
 	}
 
 	data.Value = string(wordBytes[:])
+
+	return
+}
+
+// readByteArray Specific func for read a slice of byte.
+func (dm *DataManager) readByteArray(address, size uint) (data Data, err ProcessException) {
+	data.DataType = BYTE
+
+	_data, err := dm.process.ReadBytes(address, size)
+	data.Value = _data[0]
+	return
+}
+
+// readArray specific func for read array memory
+func (dm *DataManager) readArray(address, size uint) (data Data, err ProcessException) {
+	data.DataType = ARRAY
+
+	byteSlice := make([]byte, size)
+	_address := address
+
+	for i := 0; i < int(size); i++ {
+		_data, _err := dm.readByteArray(_address, size)
+		if _err != nil {
+			err = fmt.Errorf("Error in DataManager readByte: %s\n", _err)
+			return
+		}
+
+		value := _data.Value.(byte)
+
+		byteSlice[i] = value
+		_address += 0x01
+	}
+
+	data.Value = byteSlice
 
 	return
 }
