@@ -202,10 +202,12 @@ type TOKEN_PRIVILEGES struct {
 }
 
 func LookupPrivilegeValue(lpSystemName string, lpName string, lpLuid *LUID) bool {
+	lspSystemNamePointer, _ := syscall.UTF16PtrFromString(lpSystemName)
+	lpNamePointer, _ := syscall.UTF16PtrFromString(lpName)
 
 	ret, _, _ := procLookupPrivilegeValue.Call(
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpSystemName))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpName))),
+		uintptr(unsafe.Pointer(lspSystemNamePointer)),
+		uintptr(unsafe.Pointer(lpNamePointer)),
 		uintptr(unsafe.Pointer(lpLuid)))
 
 	return ret != 0

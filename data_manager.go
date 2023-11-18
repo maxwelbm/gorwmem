@@ -3,7 +3,7 @@ package gorwmem
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
+	"log"
 	"math"
 )
 
@@ -60,13 +60,13 @@ func GetDataManager(processName string) *DataManager {
 
 	dm.process, _err = ProcessHandler(processName)
 	if _err != nil {
-		_ = fmt.Errorf("Error in processHandler: %s\n", _err)
+		log.Printf("Error in processHandler: %s\n", _err)
 		return dm
 	}
 
 	_err = dm.process.Open()
 	if _err != nil {
-		_ = fmt.Errorf("Error in processHandler Open: %s\n", _err)
+		log.Printf("Error in processHandler Open: %s\n", _err)
 		return dm
 	} else {
 		dm.IsOpen = true
@@ -107,7 +107,7 @@ func (dm *DataManager) Read(address, size uint, dataType DataType) (data Data, e
 	}
 
 	if _err != nil {
-		_ = fmt.Errorf("Error in processHandler Read: %s\n", _err)
+		log.Printf("Error in processHandler Read: %s\n", _err)
 	}
 
 	return
@@ -137,7 +137,7 @@ func (dm *DataManager) readString(address uint) (data Data, err ProcessException
 	for {
 		_data, _err := dm.readByte(_address)
 		if _err != nil {
-			_ = fmt.Errorf("Error in DataManager readByte: %s\n", _err)
+			log.Printf("Error in DataManager readByte: %s\n", _err)
 			break
 		}
 
@@ -175,7 +175,7 @@ func (dm *DataManager) readArray(address, size uint) (data Data, err ProcessExce
 	for i := 0; i < int(size); i++ {
 		_data, _err := dm.readByteArray(_address, size)
 		if _err != nil {
-			err = fmt.Errorf("Error in DataManager readByte: %s\n", _err)
+			log.Printf("Error in DataManager readByte: %s\n", _err)
 			return
 		}
 
@@ -214,30 +214,29 @@ func (dm *DataManager) readUint(address uint) (data Data, err ProcessException) 
 // Param   (data)    : The data to write.
 // Errors  (err)	 : This will be not nil if handle is not opened or the type is invalid.
 func (dm *DataManager) Write(address uint, data Data) (err DataException) {
-	_err := error(nil)
+	err = error(nil)
 
 	if !dm.IsOpen {
 		err = errors.New("process is not open")
-		return
 	}
 
 	switch data.DataType {
 	case UINT:
-		_err = dm.writeUint(address, uint(data.Value.(int)))
+		err = dm.writeUint(address, uint(data.Value.(int)))
 	case INT:
-		_err = dm.writeInt(address, data.Value.(int))
+		err = dm.writeInt(address, data.Value.(int))
 	case BYTE:
-		_err = dm.writeByte(address, byte(data.Value.(int)))
+		err = dm.writeByte(address, byte(data.Value.(int)))
 	case STRING:
-		_err = dm.writeString(address, data.Value.(string))
+		err = dm.writeString(address, data.Value.(string))
 	case FLOAT:
-		_err = dm.writeFloat(address, data.Value.(float32))
+		err = dm.writeFloat(address, data.Value.(float32))
 	default:
 		err = errors.New("invalid data type")
 	}
 
-	if _err != nil {
-		_ = fmt.Errorf("Error in processHandler Write: %s\n", _err)
+	if err != nil {
+		log.Printf("Error in processHandler Write: %s\n", err)
 	}
 
 	return
